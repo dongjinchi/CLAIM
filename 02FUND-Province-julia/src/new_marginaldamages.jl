@@ -210,11 +210,12 @@ function compute_sc(m::Model=get_model();
     mm = get_marginal_model(m; year = year, gas = gas, pulse_size = pulse_size)
 
     ntimesteps = getindexfromyear(last_year)
+    nregions = length(Mimi.dimension(m, :regions))
 
     if n === nothing
         # Run the "best guess" social cost calculation
         run(mm; ntimesteps = ntimesteps)
-        sc = _compute_sc_from_mm(mm, year = year, gas = gas, ntimesteps = ntimesteps, equity_weights = equity_weights, eta = eta, prtp = prtp, equity_weights_normalization_region=equity_weights_normalization_region)
+        sc = _compute_sc_from_mm(mm, year = year, gas = gas, ntimesteps = ntimesteps, equity_weights = equity_weights, eta = eta, prtp = prtp, equity_weights_normalization_region=equity_weights_normalization_region, nregions = nregions)
     elseif n < 1
         error("Invalid n = $n. Number of trials must be a positive integer.")
     else
@@ -234,18 +235,19 @@ function compute_sc(m::Model=get_model();
     end
 end
 
+
 # helper function for computing SC from a MarginalModel that's already been run, not to be exported
-function _compute_sc_from_mm(mm::MarginalModel; year::Int, gas::Symbol, ntimesteps::Int, equity_weights::Bool, equity_weights_normalization_region::Int, eta::Float64, prtp::Float64)
+function _compute_sc_from_mm(mm::MarginalModel; year::Int, gas::Symbol, ntimesteps::Int, equity_weights::Bool, equity_weights_normalization_region::Int, eta::Float64, prtp::Float64, nregions::Int)
 
     # Calculate the marginal damage between run 1 and 2 for each year/region
     marginaldamage = mm[:impactaggregation, :loss]
 
     ypc = mm.base[:socioeconomic, :ypc]
-
+    
     # Compute discount factor with or without equityweights
-    df = zeros(ntimesteps, 16)
+    df = zeros(ntimesteps, nregions )
     if !equity_weights
-        for r = 1:16
+        for r = 1:nregions
             x = 1.
             for t = getindexfromyear(year):ntimesteps
                 df[t, r] = x
@@ -255,7 +257,7 @@ function _compute_sc_from_mm(mm::MarginalModel; year::Int, gas::Symbol, ntimeste
         end
     else
         normalization_ypc = equity_weights_normalization_region==0 ? mm.base[:socioeconomic, :globalypc][getindexfromyear(year)] : ypc[getindexfromyear(year), equity_weights_normalization_region]
-        df = Float64[t >= getindexfromyear(year) ? (normalization_ypc / ypc[t, r]) ^ eta / (1.0 + prtp) ^ (t - getindexfromyear(year)) : 0.0 for t = 1:ntimesteps, r = 1:16]
+        df = Float64[t >= getindexfromyear(year) ? (normalization_ypc / ypc[t, r]) ^ eta / (1.0 + prtp) ^ (t - getindexfromyear(year)) : 0.0 for t = 1:ntimesteps, r = 1:nregions]
     end 
 
     # Compute global social cost
@@ -287,8 +289,9 @@ function get_marginal_model(m::Model = get_model(); gas::Symbol = :CO2, year::Un
     # note use of `pulse_size` as the `delta` in the creation of a marginal model,
     # which allows for normalization to $ per ton
     mm = create_marginal_model(m, pulse_size)
+    
     add_marginal_emissions!(mm.modified, year; gas = gas, pulse_size = pulse_size)
-
+    
     return mm
 end
 
@@ -340,7 +343,7 @@ by the `pulse_size` used).
 function add_marginal_emissions!(m, year::Union{Int, Nothing} = nothing; gas::Symbol = :CO2, pulse_size::Float64 = 1e7)
 
     # Add additional emissions to m
-    add_comp!(m, emissionspulse, before = :climateco2cycle)
+    add_comp!(m, emissionspulse, after = :emissions)
     nyears = length(Mimi.time_labels(m))
     addem = zeros(nyears) 
     if year != nothing 
@@ -350,10 +353,12 @@ function add_marginal_emissions!(m, year::Union{Int, Nothing} = nothing; gas::Sy
         addem[getindexfromyear(year):getindexfromyear(year) + 9] .= pulse_size / (10 * _weight_normalization(gas)) *  _gas_normalization(gas)
     end
     update_param!(m, :emissionspulse, :add, addem)
+    
 
     # Reconnect the appropriate emissions in m
     if gas == :CO2
         connect_param!(m, :emissionspulse, :input, :emissions, :mco2)
+        connect_param!(m, :multiplier, :input,  :emissionspulse, :output)
         connect_param!(m, :climateco2cycle, :mco2, :emissionspulse, :output)
     elseif gas == :CH4
         connect_param!(m, :emissionspulse, :input, :emissions, :globch4)

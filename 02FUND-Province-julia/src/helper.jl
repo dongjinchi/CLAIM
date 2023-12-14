@@ -4,10 +4,9 @@ using Distributions
 Converts a year value into an integer corresponding to fund's time index.
 """
 function getindexfromyear(year::Int)
-    baseyear = 1950
+    baseyear = 2015
     return year - baseyear + 1
 end
-
 
 """
 Reads parameter csvs from data directory into a dictionary with two keys:
