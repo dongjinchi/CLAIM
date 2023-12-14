@@ -261,8 +261,9 @@ function _compute_sc_from_mm(mm::MarginalModel; year::Int, gas::Symbol, ntimeste
     end 
 
     # Compute global social cost
-    sc = sum(marginaldamage[2:ntimesteps, :] .* df[2:ntimesteps, :])   # need to start from second value because first value is missing
-    return sc
+    gsc = sum(marginaldamage[2:ntimesteps, :] .* df[2:ntimesteps, :])   # need to start from second value because first value is missing
+    rsc = sum(marginaldamage[2:ntimesteps, :] .* df[2:ntimesteps, :],  dims=1)
+    return gsc, rsc
 end
 
 # Post trial function used for computing monte carlo vector of social cost values
