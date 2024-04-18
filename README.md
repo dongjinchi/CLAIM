@@ -1,3 +1,3 @@
-# CLAIM：Climate Loss Assessment Intergrated Muti-model System.
+# CLAIM：Climate Loss Assessment Integrated Multi-model System.
 
-this is the code for CLAIM model
+ClAIM is a **C**limate **L**oss **A**ssessment **I**ntegrated **M**ulti-model System that is coupled with FUND model, FaIR model and MESMER model.
