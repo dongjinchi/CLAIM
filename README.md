@@ -1,3 +1,3 @@
-This is the code for provincal SCC estimation based on MimiFUND and MimiFAIR models.
+#CLAIM：Climate Loss Assessment Intergrated Muti-model System.
 
-Start with ```03FUNDp-MimiFAIR/MimiFUND-MimiFAIR162-Flat.ipynb```
+this is the code for CLAIM model
