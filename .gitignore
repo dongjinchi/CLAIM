@@ -1,0 +1,12 @@
+# 可选组件：外层不确定性 MC 用的 MESMER 新息 Cholesky 因子（110 MB）。
+#
+# **它被排除在基础包之外，不是遗漏。** get_model / run / compute_scco2 完全不读它
+# （已实测：删掉该文件后 SCC 仍逐位等于 690.4507205341098）；只有 run_scc_mc
+# 在 sample_mesmer=true 时需要它来给局地天气变率抽样。
+#
+# 见 README.md「两档发行」。要随包分发它，用 Git LFS 或走单独下载，
+# 不要直接 git add —— 110 MB 的单文件会把仓库变得很难克隆。
+data/unshared_parameters/climate_grid_innov_chol.csv
+
+# 用户运行 notebook 时自动生成
+results/

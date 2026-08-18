@@ -1,0 +1,9 @@
+key,value
+seed,42
+first_year,1950
+last_year,2500
+variability_start_year,2025
+n_regions,185
+n_land_gridpoints,5940
+gv_ar_order,2
+rng,MersenneTwister
